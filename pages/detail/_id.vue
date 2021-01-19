@@ -80,20 +80,25 @@
             </p>
           </div>
         </div>
-        <div v-if="credit" style="padding: 0 20px; margin-top: 40px;">
+        <div v-if="credits" style="padding: 0 20px; margin-top: 40px;">
           <div>
             <h3 style="color: dimgray;">
               Cast & Crew
             </h3>
           </div>
-          <div style="margin: 10px; white-space: nowrap; overflow-y: auto;">
-            <div v-for="(crew, index) in credit.crew" :key="index" align="center" style="display: inline-block;">
-              <v-img width="80" height="80" :src="getImage(crew.profile_path)" style="border-radius: 50%; border: 1px solid lightgray;" />
-              <div>
-                {{ crew.name }}
+          <div style="margin-top: 10px; white-space: nowrap; overflow-y: auto;">
+            <div
+              v-for="(credit, index) in credits"
+              :key="index"
+              align="center"
+              style="display: inline-block; white-space: normal; vertical-align: top; margin: 10px;"
+            >
+              <v-img width="80" height="80" :src="getImage(credit.profile_path)" style="border-radius: 50%; border: 1px solid lightgray;" />
+              <div style="margin: 10px 0; max-width: 80px;">
+                {{ credit.name }}
               </div>
-              <div style="color: gray;">
-                {{ crew.department }}
+              <div style="color: gray; max-width: 80px;">
+                {{ (credit.character !== undefined) ? credit.character : credit.known_for_department }}
               </div>
             </div>
           </div>
@@ -104,37 +109,46 @@
 </template>
 
 <script>
-import * as api from '~/services/api'
-
 export default {
+  async fetch () {
+    this.video = await fetch(process.env.BASE_URL + '/api/detail/' + this.id).then(res => res.json())
+    this.loading = false
+  },
   data: () => ({
+    id: null,
     video: null,
-    credit: null,
+    credits: [],
     loading: true
   }),
   created () {
-    const id = this.$route.params.id
-    this.getDetail(id)
-    this.getCredit(id)
+    this.id = this.$route.params.id
+    this.getCredit()
   },
   methods: {
-    getDetail (id) {
-      const url = process.env.API_URL + '/movie/' + id
-      api.get(url, (response) => {
-        this.video = response.data
-        setTimeout(() => {
-          this.loading = false
-        }, 250)
-      })
-    },
     getImage (path) {
-      return api.getImage(path)
+      let result = null
+      if (path) {
+        result = 'https://image.tmdb.org/t/p/w200' + path
+      }
+      return result
     },
-    getCredit (id) {
-      const url = process.env.API_URL + '/movie/' + id + '/credits'
-      api.get(url, (response) => {
-        this.credit = response.data
-      })
+    async getCredit () {
+      const data = await fetch(process.env.BASE_URL + '/api/credit/' + this.id).then(res => res.json())
+      const credits = data.crew.concat(data.cast)
+      // remove duplicate user
+      const index = []
+      for (let i = 0; i < credits.length; i++) {
+        const current = credits[i]
+        if (!index.includes(current.id)) {
+          index.push(current.id)
+          this.credits.push(current)
+        }
+      }
+    }
+  },
+  head () {
+    return {
+      title: (this.video) ? this.video.title : 'Detail'
     }
   }
 }

@@ -12,7 +12,7 @@
     </v-card>
     <div align="center" style="margin-top: 20px; max-width: 200px;">
       <h3 style="white-space: normal;">
-        {{ movie.title }}
+        {{ (movie.title) ? movie.title : movie.name }}
       </h3>
       <div>
         <v-icon color="orange" style="margin-bottom: 3px;">
@@ -25,8 +25,6 @@
 </template>
 
 <script>
-import * as api from '~/services/api'
-
 export default {
   props: {
     movie: {
@@ -36,7 +34,11 @@ export default {
   },
   methods: {
     getImage (path) {
-      return api.getImage(path)
+      let result = null
+      if (path) {
+        result = 'https://image.tmdb.org/t/p/w200' + path
+      }
+      return result
     }
   }
 }

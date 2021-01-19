@@ -48,7 +48,6 @@
 </template>
 
 <script>
-import * as api from '~/services/api'
 import MovieCard from '~/components/MovieCard'
 
 export default {
@@ -56,53 +55,49 @@ export default {
   data: () => ({
     movies: [],
     query: '',
-    url: null,
     tab: 0,
     loading: true,
     inSearch: false
   }),
   created () {
-    this.reset()
-    this.refresh()
+    this.reload('/api/playing')
   },
   methods: {
-    reset () {
-      this.url = process.env.API_URL + '/movie/now_playing'
-    },
-    refresh () {
+    async reload (url) {
       this.loading = true
-      api.get(this.url, (response) => {
-        this.movies = response.data.results
-        this.loading = false
-      }, () => {
-        this.loading = false
-      })
+      this.movies = (await fetch(process.env.BASE_URL + url).then(res => res.json())).results
+      this.loading = false
     },
-    search () {
+    async search () {
+      this.loading = true
       if (this.query.length > 0) {
-        this.url = process.env.API_URL + '/search/movie?query=' + this.query
         this.inSearch = true
+        await this.reload('/api/search/' + this.query)
       } else {
         this.inSearch = false
-        this.reset()
+        await this.reload('/api/playing')
       }
+      this.loading = false
       this.tab = 0
-      this.refresh()
     },
-    onTabChange (currentTab) {
+    async onTabChange (currentTab) {
+      this.loading = true
       switch (currentTab) {
         case 1:
-          this.url = process.env.API_URL + '/discover/movie?sort_by=popularity.desc'
+          await this.reload('/api/movie')
           break
         case 2:
-          this.url = process.env.API_URL + '/discover/tv?sort_by=popularity.desc'
+          await this.reload('/api/tv')
           break
         default:
-          this.reset()
+          await this.reload('/api/playing')
           break
       }
-      this.refresh()
+      this.loading = false
     }
-  }
+  },
+  head: () => ({
+    title: 'Home'
+  })
 }
 </script>

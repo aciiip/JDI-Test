@@ -3,8 +3,8 @@ import colors from 'vuetify/es5/util/colors'
 export default {
   // Global page headers (https://go.nuxtjs.dev/config-head)
   head: {
-    titleTemplate: '%s - jdi-test',
-    title: 'jdi-test',
+    titleTemplate: '%s - JDI Test',
+    title: 'JDI Test',
     meta: [
       { charset: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
@@ -62,7 +62,11 @@ export default {
   },
 
   env: {
-    API_KEY: process.env.VUE_APP_API_KEY,
-    API_URL: process.env.VUE_APP_API_URL
-  }
+    BASE_URL: process.env.VUE_APP_BASE_URL
+  },
+
+  serverMiddleware: [
+    '~/api/index.js'
+  ]
+
 }
